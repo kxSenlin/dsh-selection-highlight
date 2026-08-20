@@ -1,0 +1,7 @@
+# dsh-selection-highlight bundle layer: mount the browser-half plugin.
+# All behavior lives in `./client`; the node half is an empty holder so the
+# row participates in the default web profile's client bundle scan.
+- insert:
+    - id: selection-highlight
+      name: 'dsh-selection-highlight'
+      config: {}

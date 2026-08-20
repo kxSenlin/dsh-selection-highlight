@@ -1,0 +1,77 @@
+{
+  "name": "dsh-selection-highlight",
+  "version": "0.1.0",
+  "description": "Selection Highlight（选区高亮）for dsh Web：双击/拖选对话文本后，对话区域内的相同文本片段淡高亮。VS Code Selection Highlight 风格的纯浏览器侧 dsh 插件。",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots"
+      ],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.1",
+    "jsdom": "^30.0.1",
+    "playwright-core": "^1.62.1",
+    "tsdown": "^0.22.14",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc -p tsconfig.json",
+    "test:smoke": "npm run build && node test/smoke.mjs"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek",
+    "deepseek-harness",
+    "selection-highlight",
+    "highlight",
+    "web",
+    "plugin",
+    "cordis"
+  ],
+  "author": "kxSenlin",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kxSenlin/dsh-selection-highlight.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
+}
