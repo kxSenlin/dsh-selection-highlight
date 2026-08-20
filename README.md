@@ -4,9 +4,7 @@ Selection Highlight（选区高亮）：在 dsh Web 对话中双击或拖选一�
 **对话消息区域**内与选中文本相同的片段会以低一级背景淡高亮。选中原文保持
 浏览器原生选区背景；按 `Esc`、点击空白处、切换会话或 DOM 重建时自动清除。
 
-功能对标 VS Code 的 **Selection Highlight**（`editor.selectionHighlight` /
-`editor.wordHighlightBackground`），而不是 Visual Studio 的语义级
-*Highlight References*：本插件做的是**纯文本子串匹配**，不解析符号。
+功能类似 VS Code 的 **Selection Highlight**。
 
 ## 安装（官方方式）
 
