@@ -17,6 +17,12 @@ dsh plugin --profile web add github:kxSenlin/dsh-selection-highlight
 
 安装后重启 `dsh web`。设置入口：设置 → **选区高亮**。
 
+更新到最新提交：
+
+```powershell
+dsh plugin --profile web update dsh-selection-highlight
+```
+
 本地开发安装（link 到当前 checkout）：
 
 ```powershell
@@ -33,6 +39,8 @@ dsh plugin --profile web add .
 | 启用文本高亮 | 开 | 关闭立即清除高亮 |
 | 忽略大小写 | 开 | `deepseek` 与 `DeepSeek` 同段 |
 | 最少字符数 | 4 | 1–64，过短选区不触发 |
+| 高亮颜色 | `#3b82f6` | 原生取色器，可任意选择 |
+| 不透明度 | 45% | 5%–100%，滑杆即时预览 |
 | 对话区域 CSS 选择器 | `[data-conversation-scroll] [data-chat-flow]` | dsh 改版后的兜底适配 |
 
 另有固定上限：选中文本最长 128 字符；匹配结果最多 2000 个 Range；含换行、

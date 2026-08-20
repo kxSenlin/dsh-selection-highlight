@@ -85,6 +85,9 @@ try {
   console.log('highlight ranges:', rangesBefore)
   assert.equal(rangesBefore, 3, 'selected occurrence excluded; three other case-insensitive matches')
 
+  const defaultStyle = await page.evaluate(() => document.querySelector('style[data-plugin="dsh-selection-highlight"]')?.textContent ?? '')
+  assert.match(defaultStyle, /rgba\(59, 130, 246, 0\.45\)/, 'default highlight color is #3b82f6 at 45%')
+
   await page.keyboard.press('Escape')
   await page.waitForTimeout(100)
   const cleared = await page.evaluate(() => CSS.highlights.get('dsh-selection-highlight') === undefined)
@@ -98,10 +101,29 @@ try {
   let settingsOpened = false
   try {
     await settingsTrigger.click({ timeout: 3000 })
-    await page.waitForTimeout(1500)
-    const hasSection = await page.getByText('选区高亮', { exact: true }).count()
-    console.log('selection-highlight settings entries:', hasSection)
-    settingsOpened = hasSection > 0
+    await page.waitForTimeout(1200)
+    const sectionEntry = page.getByText('选区高亮', { exact: true }).first()
+    await sectionEntry.click({ timeout: 3000 })
+    await page.waitForTimeout(800)
+
+    const colorCount = await page.locator('.shl-color').count()
+    const rangeCount = await page.locator('.shl-range').count()
+    console.log('color controls:', colorCount, 'range controls:', rangeCount)
+    assert.equal(colorCount, 1, 'color picker rendered')
+    assert.equal(rangeCount, 1, 'opacity slider rendered')
+
+    await page.locator('.shl-color').evaluate((input) => {
+      input.value = '#ff0000'
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await page.locator('.shl-range').evaluate((input) => {
+      input.value = '0.8'
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await page.waitForTimeout(300)
+    const adjustedStyle = await page.evaluate(() => document.querySelector('style[data-plugin="dsh-selection-highlight"]')?.textContent ?? '')
+    assert.match(adjustedStyle, /rgba\(255, 0, 0, 0\.8\)/, 'color and opacity apply live')
+    settingsOpened = true
   } catch (error) {
     console.log('settings open skipped:', error.message.split('\n')[0])
   }

@@ -19,15 +19,24 @@ export interface HighlightSettings {
   ignoreCase: boolean
   minLength: number
   scopeSelector: string
+  /** Highlight color as #rrggbb. */
+  color: string
+  /** Highlight opacity in [0.05, 1]. */
+  opacity: number
 }
 
 export const DEFAULT_SCOPE_SELECTOR = '[data-conversation-scroll] [data-chat-flow]'
+
+export const DEFAULT_HIGHLIGHT_COLOR = '#3b82f6'
+export const DEFAULT_HIGHLIGHT_OPACITY = 0.45
 
 export const DEFAULT_SETTINGS: HighlightSettings = {
   enabled: true,
   ignoreCase: true,
   minLength: 4,
   scopeSelector: DEFAULT_SCOPE_SELECTOR,
+  color: DEFAULT_HIGHLIGHT_COLOR,
+  opacity: DEFAULT_HIGHLIGHT_OPACITY,
 }
 
 const SETTINGS_STORAGE_KEY = 'dsh.selection-highlight.settings.v1'
@@ -67,6 +76,17 @@ function clampMinLength(value: unknown): number {
   return DEFAULT_SETTINGS.minLength
 }
 
+function normalizeColor(value: unknown): string {
+  return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)
+    ? value
+    : DEFAULT_HIGHLIGHT_COLOR
+}
+
+function normalizeOpacity(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return DEFAULT_HIGHLIGHT_OPACITY
+  return Math.min(1, Math.max(0.05, Math.round(value * 100) / 100))
+}
+
 /** Merge untrusted stored values into a complete, valid settings object. */
 export function normalizeSettings(partial: Partial<HighlightSettings> | undefined): HighlightSettings {
   const raw = partial ?? {}
@@ -77,6 +97,8 @@ export function normalizeSettings(partial: Partial<HighlightSettings> | undefine
     scopeSelector: typeof raw.scopeSelector === 'string' && raw.scopeSelector.trim() !== ''
       ? raw.scopeSelector.trim()
       : DEFAULT_SCOPE_SELECTOR,
+    color: normalizeColor(raw.color),
+    opacity: normalizeOpacity(raw.opacity),
   }
 }
 
@@ -164,6 +186,7 @@ export class SelectionHighlightController {
   setSettings(patch: Partial<HighlightSettings>): void {
     this.settings = normalizeSettings({ ...this.settings, ...patch })
     saveSettings(this.settings)
+    ensureHighlightStyle(this.settings.color, this.settings.opacity)
     if (!this.settings.enabled) this.clearHighlights()
     for (const listener of this.subscribers) listener()
     this.schedule(60)
@@ -185,7 +208,7 @@ export class SelectionHighlightController {
         characterData: true,
       })
     }
-    ensureHighlightStyle()
+    ensureHighlightStyle(this.settings.color, this.settings.opacity)
   }
 
   dispose(): void {
@@ -331,19 +354,27 @@ export class SelectionHighlightController {
 
 let highlightStyleElement: HTMLStyleElement | null = null
 
-const HIGHLIGHT_STYLE = [
-  '::highlight(dsh-selection-highlight) {',
-  '  background-color: rgba(96, 165, 250, 0.26);',
-  '  border-radius: 2px;',
-  '}',
-].join('\n')
+function hexToRgba(color: string, opacity: number): string {
+  const value = Number.parseInt(color.slice(1), 16)
+  const r = (value >> 16) & 0xff
+  const g = (value >> 8) & 0xff
+  const b = value & 0xff
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`
+}
 
-function ensureHighlightStyle(): void {
-  if (highlightStyleElement !== null && highlightStyleElement.isConnected) return
-  highlightStyleElement = document.createElement('style')
-  highlightStyleElement.setAttribute('data-plugin', 'dsh-selection-highlight')
-  highlightStyleElement.textContent = HIGHLIGHT_STYLE
-  document.head.append(highlightStyleElement)
+function ensureHighlightStyle(color: string, opacity: number): void {
+  const css = [
+    '::highlight(dsh-selection-highlight) {',
+    `  background-color: ${hexToRgba(color, opacity)};`,
+    '  border-radius: 2px;',
+    '}',
+  ].join('\n')
+  if (highlightStyleElement === null || !highlightStyleElement.isConnected) {
+    highlightStyleElement = document.createElement('style')
+    highlightStyleElement.setAttribute('data-plugin', 'dsh-selection-highlight')
+    document.head.append(highlightStyleElement)
+  }
+  if (highlightStyleElement.textContent !== css) highlightStyleElement.textContent = css
 }
 
 function removeHighlightStyle(): void {

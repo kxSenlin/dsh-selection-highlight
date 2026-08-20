@@ -6,6 +6,8 @@
 
 import { createElement, useEffect, useRef } from 'react'
 import {
+  DEFAULT_HIGHLIGHT_COLOR,
+  DEFAULT_HIGHLIGHT_OPACITY,
   DEFAULT_SCOPE_SELECTOR,
   SelectionHighlightController,
   isHighlightSupported,
@@ -41,6 +43,14 @@ const PANEL_CSS = `
   border-radius: 8px;
   background: var(--dsw-alias-bg-module-platform, rgba(148, 163, 184, 0.04));
 }
+.shl-row-vertical {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+.shl-row-vertical .shl-control {
+  width: 100%;
+}
 .shl-row .meta {
   min-width: 0;
 }
@@ -73,8 +83,29 @@ const PANEL_CSS = `
   color: var(--dsw-alias-label-primary, #e5e7eb);
   font: inherit;
 }
+.shl-color {
+  width: 44px;
+  height: 30px;
+  padding: 2px;
+  border: 1px solid var(--dsw-alias-border-l2, rgba(148, 163, 184, 0.28));
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+.shl-range {
+  width: 150px;
+  accent-color: rgb(59, 130, 246);
+  cursor: pointer;
+}
+.shl-range-value {
+  min-width: 38px;
+  text-align: right;
+  color: var(--dsw-alias-label-secondary, #9ca3af);
+  font-variant-numeric: tabular-nums;
+}
 .shl-selector {
-  width: min(360px, 42vw);
+  flex: 1;
+  min-width: 0;
   padding: 6px 8px;
   border: 1px solid var(--dsw-alias-border-l2, rgba(148, 163, 184, 0.28));
   border-radius: 6px;
@@ -124,8 +155,10 @@ function makeRow(
   title: string,
   description: string,
   control: HTMLElement,
+  vertical = false,
 ): HTMLDivElement {
   const row = el('div', 'shl-row')
+  if (vertical) row.classList.add('shl-row-vertical')
   const meta = el('div', 'meta')
   meta.append(el('div', 'title', title), el('div', 'desc', description))
   row.append(meta, control)
@@ -194,6 +227,34 @@ export function createSettingsPanel(controller: SelectionHighlightController): S
     minLengthInput,
   )
 
+  const colorInput = el('input', 'shl-color')
+  colorInput.type = 'color'
+  colorInput.value = settings.color
+  colorInput.addEventListener('input', () => {
+    controller.setSettings({ color: colorInput.value })
+  })
+
+  const opacityInput = el('input', 'shl-range')
+  opacityInput.type = 'range'
+  opacityInput.min = '0.05'
+  opacityInput.max = '1'
+  opacityInput.step = '0.05'
+  opacityInput.value = String(settings.opacity)
+  const opacityLabel = el('span', 'shl-range-value', `${Math.round(settings.opacity * 100)}%`)
+  opacityInput.addEventListener('input', () => {
+    const opacity = Number(opacityInput.value)
+    opacityLabel.textContent = `${Math.round(opacity * 100)}%`
+    controller.setSettings({ opacity })
+  })
+
+  const colorControl = el('div', 'shl-control')
+  colorControl.append(colorInput, opacityInput, opacityLabel)
+  const colorRow = makeRow(
+    '高亮颜色',
+    '设置高亮色与不透明度；拖动滑杆即时预览，修改立即生效。',
+    colorControl,
+  )
+
   const selectorInput = el('input', 'shl-selector')
   selectorInput.type = 'text'
   selectorInput.value = settings.scopeSelector
@@ -213,10 +274,15 @@ export function createSettingsPanel(controller: SelectionHighlightController): S
       ignoreCase: true,
       minLength: 4,
       scopeSelector: DEFAULT_SCOPE_SELECTOR,
+      color: DEFAULT_HIGHLIGHT_COLOR,
+      opacity: DEFAULT_HIGHLIGHT_OPACITY,
     })
     enabledRow.querySelector('input')!.checked = true
     ignoreCaseRow.querySelector('input')!.checked = true
     minLengthInput.value = '4'
+    colorInput.value = DEFAULT_HIGHLIGHT_COLOR
+    opacityInput.value = String(DEFAULT_HIGHLIGHT_OPACITY)
+    opacityLabel.textContent = `${Math.round(DEFAULT_HIGHLIGHT_OPACITY * 100)}%`
     selectorInput.value = DEFAULT_SCOPE_SELECTOR
     refreshStatus()
   })
@@ -226,6 +292,7 @@ export function createSettingsPanel(controller: SelectionHighlightController): S
     '对话区域 CSS 选择器',
     'dsh 改版后可手动指定消息容器。默认值对应当前会话列的消息流。',
     selectorControl,
+    true,
   )
 
   const refreshStatus = (): void => {
@@ -249,7 +316,7 @@ export function createSettingsPanel(controller: SelectionHighlightController): S
     )
   }
 
-  root.append(enabledRow, ignoreCaseRow, minLengthRow, selectorRow, status)
+  root.append(enabledRow, ignoreCaseRow, minLengthRow, colorRow, selectorRow, status)
   refreshStatus()
 
   return {

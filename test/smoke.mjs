@@ -68,6 +68,9 @@ function createHarness(html) {
   }
   plugin.apply(ctx)
   assert.ok(ctx.cleanup, 'selection engine started and returned cleanup')
+  const style = window.document.querySelector('style[data-plugin="dsh-selection-highlight"]')
+  assert.ok(style, 'highlight style injected')
+  assert.match(style.textContent, /rgba\(59, 130, 246, 0\.45\)/, 'default highlight color and opacity')
 
   const selectText = (element, start, end) => {
     const text = element.firstChild
